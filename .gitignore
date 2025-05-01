@@ -1,0 +1,22 @@
+# Ignore Python environment files
+.python-version
+*.pyc
+__pycache__/
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Ignore lock files
+*.lock
+
+# Ignore project-specific files
+hello.py
+pyproject.toml
+
+# Ignore Jupyter checkpoints
+.ipynb_checkpoints/
