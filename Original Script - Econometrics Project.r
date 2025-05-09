@@ -255,7 +255,6 @@ ologit = polr(ordinal_IMDBRating~R.Rating+No.of.Seasons+
               data=df, Hess = T, method="logistic")
 
 summary(ologit)
-coeftest(ologit_res)
 
 ologit_res = polr(ordinal_IMDBRating~R.Rating+
                     Genre_ActionAdventure+Genre_Children+
@@ -264,6 +263,7 @@ ologit_res = polr(ordinal_IMDBRating~R.Rating+
                     Platform.Count+featuring,
                   data=df, Hess = T, method="logistic")
 
+coeftest(ologit_res)
 #H0: jointly insignificant
 anova(ologit, ologit_res)
 
@@ -399,11 +399,13 @@ df_selected <- df[, c(
   3                                
 )]
 
-install.packages(c("xgboost", "randomForest", "caret", "Matrix"))
+#install.packages(c("xgboost", "randomForest", "caret", "Matrix"))
 library(xgboost)
 library(randomForest)
 library(caret)
 library(Matrix)
+
+df_model <- df_selected
 
 #  data split
 X <- df_model[, colnames(df_model) != "IMDB.Rating"]
@@ -434,6 +436,19 @@ mape <- function(actual, predicted) {
 print(c("R²:", round(r2(y_test, rf_preds), 3)))
 print(c("MAPE:", round(mape(y_test, rf_preds), 2)))
 
+# feature importance
+rf_importance <- importance(rf_model)
+rf_importance_df <- data.frame(
+  Feature = rownames(rf_importance),
+  Importance = rf_importance[, "IncNodePurity"]
+)
+
+ggplot(rf_importance_df, aes(x = reorder(Feature, Importance), y = Importance)) +
+  geom_col(fill = "skyblue") +
+  coord_flip() +
+  labs(title = "Random Forest Feature Importance", x = "Feature", y = "Importance") +
+  theme_minimal()
+
 # XGBoost
 
 colnames(X_train) <- make.names(colnames(X_train))
@@ -454,3 +469,13 @@ xgb_preds <- predict(xgb_model, X_test_matrix)
 
 print(c("R²:", round(r2(y_test, xgb_preds), 3)))
 print(c("MAPE:", round(mape(y_test, xgb_preds), 2)))
+
+# feature importance
+
+xgb_importance <- xgb.importance(model = xgb_model)
+
+xgb.plot.importance(xgb_importance, top_n = 20, 
+                    rel_to_first = TRUE, 
+                    xlab = "Importance",
+                    main = "XGBoost Feature Importance")
+
