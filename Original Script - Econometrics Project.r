@@ -27,11 +27,12 @@ library("brant")
 library(corrplot)
 #install.packages("texreg")
 library(texreg)
+library(car)
 
 
 #Reading data
 
-df = read.csv(file="C:/Users/karol/Downloads/econometrics/All_Streaming_Shows.csv", header=TRUE)
+df = read.csv(file="data/All_Streaming_Shows.csv", header=TRUE)
 
 head(df)
 summary(df)
@@ -247,35 +248,35 @@ data<-as.data.frame(df)
 #counts <- apply(binary, 2, count_zeros_ones)
 #print(counts)
 ologit = polr(ordinal_IMDBRating~R.Rating+No.of.Seasons+
-               Genre_ActionAdventure+(Genre_Animation*Genre_Children)+
+                Genre_ActionAdventure+(Genre_Animation*Genre_Children)+
                 Genre_Crime+Genre_Drama+Genre_Reality+Genre_Anime+
                 +Genre_Comedy+Genre_Documentary+
                 Platform.Count+featuring+love,
-                data=df, Hess = T, method="logistic")
-
-summary(ologit)
-coeftest(ologit_res)
-
-ologit_res = polr(ordinal_IMDBRating~R.Rating+
-                Genre_ActionAdventure+Genre_Children+
-                Genre_Reality+Genre_Anime+
-                +Genre_Comedy+Genre_Documentary+
-                Platform.Count+featuring,
               data=df, Hess = T, method="logistic")
 
+summary(ologit)
+
+ologit_res = polr(ordinal_IMDBRating~R.Rating+
+                    Genre_ActionAdventure+Genre_Children+
+                    Genre_Reality+Genre_Anime+
+                    +Genre_Comedy+Genre_Documentary+
+                    Platform.Count+featuring,
+                  data=df, Hess = T, method="logistic")
+
+coeftest(ologit_res)
 #H0: jointly insignificant
 anova(ologit, ologit_res)
 
 linearHypothesis(ologit, c("No.of.Seasons=0", "Genre_Animation=0", "Genre_Crime=0",
-                            "Genre_Drama=0", "love=0", "Genre_Animation:Genre_Children=0",
-                            "Genre_Anime=0"))
+                           "Genre_Drama=0", "love=0", "Genre_Animation:Genre_Children=0",
+                           "Genre_Anime=0"))
 
 ologit2 = polr(ordinal_IMDBRating~R.Rating+
-                    Genre_ActionAdventure+Genre_Children+
-                    Genre_Reality
-                    +Genre_Comedy+Genre_Documentary+
-                    Platform.Count+featuring,
-                  data=df, Hess = T, method="logistic")
+                 Genre_ActionAdventure+Genre_Children+
+                 Genre_Reality
+               +Genre_Comedy+Genre_Documentary+
+                 Platform.Count+featuring,
+               data=df, Hess = T, method="logistic")
 
 coeftest(ologit2)
 lipsitz.test(ologit2)
@@ -296,7 +297,7 @@ probit<-polr(ordinal_IMDBRating~R.Rating+
                Genre_Reality
              +Genre_Comedy+Genre_Documentary+
                Platform.Count+featuring,
-                data=df, Hess=T, method="probit")
+             data=df, Hess=T, method="probit")
 summary(probit)
 coeftest(probit)
 
@@ -342,8 +343,8 @@ c_loglog<-polr(ordinal_IMDBRating~R.Rating+
 
 null_model<-vglm(ordinal_IMDBRating~1, cratio(parallel = FALSE), data = df, model=TRUE)
 lipsitz(null_model)
-hosmerlem(ologit10)
-brant(ologit10)
+#hosmerlem(ologit10)
+#brant(ologit10)
 lipsitz(c_loglog)
 hosmerlem(c_loglog)
 
@@ -375,17 +376,106 @@ residuals <- residuals(cont_ratio)
 residuals1<-residuals(probit)
 
 # Perform Breusch-Pagan test
-bptest(residuals ~ df$R.Rating+
-         df$Genre_ActionAdventure+df$Genre_Children+
-         df$Genre_Reality
-       +df$Genre_Comedy+df$Genre_Documentary+
-         df$Platform.Count+df$featuring)
-bptest(cont_ratio)
+#bptest(residuals ~ df$R.Rating+
+#         df$Genre_ActionAdventure+df$Genre_Children+
+#         df$Genre_Reality
+#       +df$Genre_Comedy+df$Genre_Documentary+
+#         df$Platform.Count+df$featuring)
+#bptest(cont_ratio)
 
-plot(residuals ~ df$Genre_ActionAdventure)
+# plot(residuals ~ df$Genre_ActionAdventure)
 
 #Marginal effects with robust estimator 
 
 margeff(cont_ratio,vcov = vcovHC(your_model))
 
+#ML
+
+df_selected <- df[, c(
+  2, 4, 6,                             
+  10:25, 27:31, 34, 35,               
+  39, 40, 41, 42, 43, 44, 45, 46,  
+  47:50,                           
+  3                                
+)]
+
+#install.packages(c("xgboost", "randomForest", "caret", "Matrix"))
+library(xgboost)
+library(randomForest)
+library(caret)
+library(Matrix)
+
+df_model <- df_selected
+
+#  data split
+X <- df_model[, colnames(df_model) != "IMDB.Rating"]
+y <- df_model$IMDB.Rating
+
+#Random Forests
+
+set.seed(123)
+train_idx <- createDataPartition(y, p = 0.8, list = FALSE)
+X_train <- X[train_idx, ]
+X_test <- X[-train_idx, ]
+y_train <- y[train_idx]
+y_test <- y[-train_idx]
+
+rf_model <- randomForest(X_train, y_train, ntree = 500, importance = TRUE)
+rf_preds <- predict(rf_model, X_test)
+
+# calculate R2 and MAPE
+
+r2 <- function(actual, predicted) {
+  1 - sum((actual - predicted)^2) / sum((actual - mean(actual))^2)
+}
+
+mape <- function(actual, predicted) {
+  mean(abs((actual - predicted) / actual)) * 100
+}
+
+print(c("R²:", round(r2(y_test, rf_preds), 3)))
+print(c("MAPE:", round(mape(y_test, rf_preds), 2)))
+
+# feature importance
+rf_importance <- importance(rf_model)
+rf_importance_df <- data.frame(
+  Feature = rownames(rf_importance),
+  Importance = rf_importance[, "IncNodePurity"]
+)
+
+ggplot(rf_importance_df, aes(x = reorder(Feature, Importance), y = Importance)) +
+  geom_col(fill = "skyblue") +
+  coord_flip() +
+  labs(title = "Random Forest Feature Importance", x = "Feature", y = "Importance") +
+  theme_minimal()
+
+# XGBoost
+
+colnames(X_train) <- make.names(colnames(X_train))
+colnames(X_test)  <- make.names(colnames(X_test))
+
+X_train_matrix <- sparse.model.matrix(~ . -1, data = X_train)
+X_test_matrix  <- sparse.model.matrix(~ . -1, data = X_test)
+
+xgb_model <- xgboost(
+  data = X_train_matrix,
+  label = y_train,
+  nrounds = 100,
+  objective = "reg:squarederror",
+  verbose = 0
+)
+
+xgb_preds <- predict(xgb_model, X_test_matrix)
+
+print(c("R²:", round(r2(y_test, xgb_preds), 3)))
+print(c("MAPE:", round(mape(y_test, xgb_preds), 2)))
+
+# feature importance
+
+xgb_importance <- xgb.importance(model = xgb_model)
+
+xgb.plot.importance(xgb_importance, top_n = 20, 
+                    rel_to_first = TRUE, 
+                    xlab = "Importance",
+                    main = "XGBoost Feature Importance")
 
