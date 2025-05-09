@@ -392,8 +392,8 @@ margeff(cont_ratio,vcov = vcovHC(your_model))
 #ML
 
 df_selected <- df[, c(
-  2, 6,                            
-  8:34, 35,               
+  2, 4, 6,                             
+  10:25, 27:31, 34, 35,               
   39, 40, 41, 42, 43, 44, 45, 46,  
   47:50,                           
   3                                
