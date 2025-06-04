@@ -1,0 +1,56 @@
+name: RR-project-env
+channels:
+  - conda-forge
+dependencies:
+  # Python + Jupyter
+  - python=3.11
+  - jupyterlab
+  - pip
+
+  # R base and IRKernel for R in Jupyter
+  - r-base=4.3.2
+  - r-irkernel
+
+  # Core R packages available on conda-forge
+  - r-tidyverse
+  - r-readr
+  - r-dplyr
+  - r-ggplot2
+  - r-tidytext
+  - r-xgboost
+  - r-randomforest
+  - r-caret
+  - r-matrix
+  - r-modelsummary
+  - r-descTools
+  - r-vgam
+  - r-fastdummies
+  - r-stargazer
+  - r-sandwich
+  - r-zoo
+  - r-lmtest
+  - r-mass
+  - r-pscl
+  - r-car
+  - r-ucminf
+  - r-ordinal
+  - r-reshape
+  - r-generalhoslem
+  - r-oglmx
+  - r-aod
+  - r-brant
+  - r-corrplot
+  - r-texreg
+
+  # Python packages installed via pip
+  - pip:
+      - pandas
+      - numpy
+      - regex
+      - scipy
+      - nltk
+      - scikit-learn
+      - statsmodels
+      - xgboost
+      - matplotlib
+      - seaborn
