@@ -1,0 +1,13 @@
+pandas
+numpy
+regex
+scipy
+nltk
+scikit-learn
+statsmodels
+xgboost
+matplotlib
+seaborn
+
+
+
