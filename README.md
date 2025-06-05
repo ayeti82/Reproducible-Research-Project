@@ -15,7 +15,7 @@ This repository contains the original R script and an adequate version in Jupyte
   - `python_package_info.txt` contains information on packages and versions for our .ipynb file
   - `python_package_requirements.txt` is the executable file for installing the Python packages
   - `r_package_info.txt` contains information on packages and versions for our .R file
-  - `r_package_requirements.R` is the executable file for installing the R packages
+  - `r_package_requirements.r` is the executable file for installing the R packages
 - `scripts/` folder containing both scripts
   - `Original Script - Econometrics Project.r` is the original R script that we aim to reproduce in Python
   - `Updated Script - Python.ipynb` is the Jupyter Notebook version of the original script
@@ -34,8 +34,8 @@ Before running the code:
 
 2. **Install required packages:**
 
-   - Run `install_packages.r` for R
-   - Run `pip install -r requirements.txt` for Python
+   - Run `r_package_requirements.r` for R
+   - Run `pip install -r python_package_requirements.txt` for Python
 
 3. **Check data paths:**  
    Ensure the dataset is located in the `data/` folder and file paths in the scripts point to the correct location.
