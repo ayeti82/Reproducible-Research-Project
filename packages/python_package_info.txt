@@ -1,0 +1,14 @@
+Python version 3.9.13
+Package: pandas | Version: 1.4.4
+Package: numpy | Version: 1.24.4
+Package: regex | Version: 2022.7.9
+Package: scipy | Version: 1.9.1
+Package: nltk | Version: 3.7
+Package: scikit-learn | Version: 1.0.2
+Package: statsmodels | Version: 0.13.2
+Package: xgboost | Version: 2.1.3
+Package: matplotlib | Version: 3.5.2
+Package: seaborn | Version: 0.11.2
+
+
+
