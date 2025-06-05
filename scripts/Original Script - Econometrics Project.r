@@ -97,20 +97,11 @@ df<- df %>%
   mutate(Content.Rating = if_else(Content.Rating=="N/A", "0", Content.Rating))
 df<- df %>%
   mutate(Content.Rating = if_else(Content.Rating=="all", "0", Content.Rating))
-#df$Content.Rating <- factor(df$Content.Rating, 
-#                    levels = c("0", "7", "13", "16", "18"), 
-#                    ordered = TRUE)
-
 
 df<-df%>%
   mutate((Content.Rating = if_else(Content.Rating=="18", "R Rated", "Not R Rated")))
 df <- dummy_cols(df, select_columns=c("(...)"))
 df<-subset(df, select=-Content.Rating)
-
-#df$Content.Rating=as.numeric(df$Content.Rating)
-#print(unique(df$Content.Rating))
-#df<- df %>%
-#  mutate(Content.Rating = if_else(is.na(Content.Rating), 0, Content.Rating))
 
 #Seasons variable
 print(unique(df$No.of.Seasons))
@@ -130,14 +121,14 @@ count_platforms <- function(x) {
 platform_counts <- sapply(df$Streaming.Platform, count_platforms)
 
 df <- df %>% mutate(Platform.Count=platform_counts)
-#df$Content.Rating<-as.numeric(df$Content.Rating)
+
 correlation <- cor(df$Genre_Reality, df$Genre_Documentary, method = "spearman")
 print(correlation)
 #Deleting duplicates
 
 df<-distinct(df)
 
-#no missing values
+#No missing values
 colSums(is.na(df))
 
 #Description column
@@ -161,7 +152,6 @@ extract_ngrams <- function(df, n) {
   return(ngrams)
 }
 
-
 #true crime
 #food network - there is genre "food"
 #world war
@@ -173,8 +163,6 @@ extract_ngrams <- function(df, n) {
 bigrams <- extract_ngrams(df, 2)
 print("Most common bigrams:")
 print(bigrams)
-
-
 
 # Extract and count trigrams
 trigrams <- extract_ngrams(df, 3)
@@ -216,9 +204,6 @@ df <- df %>%
     love = ifelse(grepl(common_phrases[9], Description, ignore.case = TRUE), 1, 0)
   )
 
-
-
-
 #ordered logit model
 print(colnames(df))
 
@@ -231,21 +216,7 @@ df<-df%>%mutate(Genre_StandupTalk=`Genre_Stand-up & Talk`)
 df<-df%>%mutate(R_Rated='R_Rated')
 df$ordinal_IMDBRating <- as.factor(round(df$IMDB.Rating))
 data<-as.data.frame(df)
-#binary <- df[, c("(...)_R Rated", "Genre_Fiction", "Genre_ActionAdventure", "Genre_Animation", "Genre_Children",
-#                 "Genre_Crime", "Genre_Drama", "Genre_Fantasy", "Genre_Horror",
-#                 "Genre_Mystery", "Genre_Reality", "Genre_Thriller", "Genre_Anime",
-#                 "Genre_Biography", "Genre_Comedy", "Genre_Cult", "Genre_Documentary",
-#                 "Genre_Family", "Genre_Food", "Genre_GameShow", "Genre_LGBTQ",
-#                 "Genre_Romance", "Genre_Sport", "Genre_Travel", "Genre_Musical",
-#                 "Genre_HomeGarden", "Genre_StandupTalk", "Genre_Pet", "Genre_Unknown",
-#                 "Platform.Count", "true_crime", "world_war", "award_winning",
-#                 "serial_killer", "emmy_award", "featuring", "love")]
-#count_zeros_ones <- function(x) {
-#  return(c(zeros = sum(x == 0), ones = sum(x == 1)))
-#}
-#df$R_Rated<-as.integer(df$R_Rated)
 
-#counts <- apply(binary, 2, count_zeros_ones)
 #print(counts)
 ologit = polr(ordinal_IMDBRating~R.Rating+No.of.Seasons+
                 Genre_ActionAdventure+(Genre_Animation*Genre_Children)+
@@ -256,6 +227,28 @@ ologit = polr(ordinal_IMDBRating~R.Rating+No.of.Seasons+
 
 summary(ologit)
 
+data1 <- data.frame(
+  Variable = c('R_Rating', 'No of Seasons', 'Genre_ActionAdventure', 'Genre_Animation',
+               'Genre_Children', 'Genre_Crime', 'Genre_Drama', 'Genre_Reality',
+               'Genre_Anime', 'Genre_Comedy', 'Genre_Documentary', 'Platform.Count', 'featuring',
+               'love', 'Genre_Animation:Genre_Children'),
+  Coefficient = c(0.088457, 0.001048, -0.216782, -0.044506, -0.447948, -0.030318, 0.068864,
+                  -0.554788, 0.188036, -0.187635, 1.284413, -0.187428, -0.509145, -0.034455, 0.118153)
+)
+
+data1 <- data1[order(data1$Coefficient), ]
+
+data1$Color <- ifelse(data1$Coefficient > 0, "green", "red")
+
+ggplot(data1, aes(x = reorder(Variable, Coefficient), y = Coefficient, fill = Color)) +
+  geom_bar(stat = "identity") +
+  coord_flip() +  # horizontal bars
+  scale_fill_identity() +
+  geom_vline(xintercept = 0, color = "gray", linetype = "dashed") +
+  labs(x = "Variable", y = "Coefficient", title = "Ordered Logit Model Coefficients") +
+  theme_minimal() +
+  theme(panel.grid.major.y = element_blank())
+
 ologit_res = polr(ordinal_IMDBRating~R.Rating+
                     Genre_ActionAdventure+Genre_Children+
                     Genre_Reality+Genre_Anime+
@@ -264,6 +257,29 @@ ologit_res = polr(ordinal_IMDBRating~R.Rating+
                   data=df, Hess = T, method="logistic")
 
 coeftest(ologit_res)
+
+data2 <- data.frame(
+  Variable = c('R_Rating', 'Genre_ActionAdventure', 
+               'Genre_Children', 'Genre_Reality',
+               'Genre_Anime', 'Genre_Comedy', 'Genre_Documentary', 'Platform.Count', 'featuring'
+  ),
+  Coefficient = c(0.0890766, -0.2421346, -0.4166322, -0.5646238, 0.1350136, -0.2089067, 1.2687664,
+                  -0.1882478, -0.5024942)
+)
+
+data2 <- data2[order(data2$Coefficient), ]
+
+data2$Color <- ifelse(data2$Coefficient > 0, "green", "red")
+
+ggplot(data2, aes(x = reorder(Variable, Coefficient), y = Coefficient, fill = Color)) +
+  geom_bar(stat = "identity") +
+  coord_flip() +  # horizontal bars
+  scale_fill_identity() +
+  geom_vline(xintercept = 0, color = "gray", linetype = "dashed") +
+  labs(x = "Variable", y = "Coefficient", title = "Ordered Logit Model with Reduced Set of Variables Coefficients") +
+  theme_minimal() +
+  theme(panel.grid.major.y = element_blank())
+
 #H0: jointly insignificant
 anova(ologit, ologit_res)
 
@@ -289,9 +305,6 @@ plot(brant(ologit2))
 
 brant(ologit_res)
 
-
-
-
 probit<-polr(ordinal_IMDBRating~R.Rating+
                Genre_ActionAdventure+Genre_Children+
                Genre_Reality
@@ -301,6 +314,26 @@ probit<-polr(ordinal_IMDBRating~R.Rating+
 summary(probit)
 coeftest(probit)
 
+data3 <- data.frame(
+  Variable = c('R_Rating', 'Genre_ActionAdventure', 
+               'Genre_Children', 'Genre_Reality',
+               'Genre_Comedy', 'Genre_Documentary', 'Platform.Count', 'featuring'
+  ),
+  Coefficient = c(0.0504, -0.1413, -0.2367, -0.3185, -0.1272, 0.6788, -0.1138, -0.2799)
+)
+
+data3 <- data3[order(data3$Coefficient), ]
+
+data3$Color <- ifelse(data3$Coefficient > 0, "green", "red")
+
+ggplot(data3, aes(x = reorder(Variable, Coefficient), y = Coefficient, fill = Color)) +
+  geom_bar(stat = "identity") +
+  coord_flip() +  # horizontal bars
+  scale_fill_identity() +
+  geom_vline(xintercept = 0, color = "gray", linetype = "dashed") +
+  labs(x = "Variable", y = "Coefficient", title = "Ordered Probit Model Coefficients") +
+  theme_minimal() +
+  theme(panel.grid.major.y = element_blank())
 
 vif(probit)
 
@@ -322,7 +355,6 @@ library(gofcat)
 lipsitz(gen_ordered_logit)
 hosmerlem(gen_ordered_logit)
 
-
 #the best
 cont_ratio<-vglm(ordinal_IMDBRating~R.Rating+
                    Genre_ActionAdventure+Genre_Children+
@@ -334,7 +366,6 @@ hosmerlem(cont_ratio)
 
 summary(cont_ratio)
 
-
 c_loglog<-polr(ordinal_IMDBRating~R.Rating+
                  Genre_ActionAdventure+Genre_Children+
                  Genre_Reality
@@ -343,8 +374,7 @@ c_loglog<-polr(ordinal_IMDBRating~R.Rating+
 
 null_model<-vglm(ordinal_IMDBRating~1, cratio(parallel = FALSE), data = df, model=TRUE)
 lipsitz(null_model)
-#hosmerlem(ologit10)
-#brant(ologit10)
+
 lipsitz(c_loglog)
 hosmerlem(c_loglog)
 
@@ -374,16 +404,6 @@ install.packages("modelsummary")
 library(modelsummary)
 residuals <- residuals(cont_ratio)
 residuals1<-residuals(probit)
-
-# Perform Breusch-Pagan test
-#bptest(residuals ~ df$R.Rating+
-#         df$Genre_ActionAdventure+df$Genre_Children+
-#         df$Genre_Reality
-#       +df$Genre_Comedy+df$Genre_Documentary+
-#         df$Platform.Count+df$featuring)
-#bptest(cont_ratio)
-
-# plot(residuals ~ df$Genre_ActionAdventure)
 
 #Marginal effects with robust estimator 
 
@@ -423,7 +443,7 @@ y_test <- y[-train_idx]
 rf_model <- randomForest(X_train, y_train, ntree = 500, importance = TRUE)
 rf_preds <- predict(rf_model, X_test)
 
-# calculate R2 and MAPE
+# calculate R2, MAE, MAPE and MSE
 
 r2 <- function(actual, predicted) {
   1 - sum((actual - predicted)^2) / sum((actual - mean(actual))^2)
@@ -433,8 +453,18 @@ mape <- function(actual, predicted) {
   mean(abs((actual - predicted) / actual)) * 100
 }
 
+mae <- function(actual, predicted) {
+  mean(abs(actual - predicted))
+}
+
+mse <- function(actual, predicted) {
+  mean((actual - predicted)^2)
+}
+
 print(c("R²:", round(r2(y_test, rf_preds), 3)))
 print(c("MAPE:", round(mape(y_test, rf_preds), 2)))
+print(c("MAE:", round(mae(y_test, rf_preds), 2)))
+print(c("MSE:", round(mse(y_test, rf_preds), 2)))
 
 # feature importance
 rf_importance <- importance(rf_model)
@@ -469,6 +499,8 @@ xgb_preds <- predict(xgb_model, X_test_matrix)
 
 print(c("R²:", round(r2(y_test, xgb_preds), 3)))
 print(c("MAPE:", round(mape(y_test, xgb_preds), 2)))
+print(c("MAE:", round(mae(y_test, xgb_preds), 2)))
+print(c("MSE:", round(mse(y_test, xgb_preds), 2)))
 
 # feature importance
 
@@ -477,5 +509,5 @@ xgb_importance <- xgb.importance(model = xgb_model)
 xgb.plot.importance(xgb_importance, top_n = 20, 
                     rel_to_first = TRUE, 
                     xlab = "Importance",
-                    main = "XGBoost Feature Importance")
-
+                    main = "XGBoost Feature Importance",
+                    col = "skyblue")
