@@ -1,0 +1,32 @@
+R version 4.3.1
+
+Package: tidyverse | Version: 2.0.0
+Package: readr | Version: 2.1.5
+Package: dplyr | Version: 1.1.4
+Package: ggplot2 | Version: 3.5.1
+Package: tidytext | Version: 0.4.2
+Package: xgboost | Version: 1.7.8.1
+Package: randomForest | Version: 4.7.1.2
+Package: caret | Version: 7.0.1
+Package: Matrix | Version: 1.6.4
+Package: modelsummary | Version: 2.3.0
+Package: DescTools | Version: 0.99.53
+Package: gofcat | Version: 0.1.2
+Package: VGAM | Version: 1.1.13
+Package: fastDummies | Version: 1.7.4
+Package: stargazer | Version: 5.2.3
+Package: sandwich | Version: 3.1.0
+Package: zoo | Version: 1.8.12
+Package: lmtest | Version: 0.9.40
+Package: MASS | Version: 7.3.60
+Package: pscl | Version: 1.5.9
+Package: car | Version: 3.1.2
+Package: ucminf | Version: 1.2.1
+Package: ordinal | Version: 2023.12.4
+Package: reshape | Version: 0.8.9
+Package: generalhoslem | Version: 1.3.4
+Package: oglmx | Version: 3.0.0.0
+Package: aod | Version: 1.3.3
+Package: brant | Version: 0.3.0
+Package: corrplot | Version: 0.92
+Package: texreg | Version: 1.39.4
