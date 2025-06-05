@@ -1,4 +1,4 @@
-# install_packages.R
+# install_packages.R for version 4.3.1
 
 required_packages <- c("tidyverse", "readr", "dplyr", "ggplot2", "tidytext", "xgboost", "randomForest", "caret", "Matrix", "modelsummary", "Matrix", "DescTools", "gofcat",  "VGAM", "fastDummies", "stargazer", "sandwich", "zoo", "lmtest", "MASS",  "pscl", "car", "ucminf", "ordinal", "reshape", "generalhoslem", "oglmx", "aod", "brant", "corrplot", "texreg")
 
